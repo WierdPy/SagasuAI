@@ -1,7 +1,7 @@
 import pymysql
 import requests
 
-apisend = False
+apisend = True
 
 
 def notify_person_event(event_type, timestamp, original_count, new_count):
@@ -14,7 +14,7 @@ def notify_person_event(event_type, timestamp, original_count, new_count):
     :param apisend: Boolean to control whether to send the notification to the API.
     """
     # 1. API-Benachrichtigung senden
-    url = "https://ntfy.sh/Sagasuuu"
+    url = "https://ntfy.sh/Sagasu"
     data = event_type  # send 'enter' or 'exit' as data
     if apisend:
         try:
