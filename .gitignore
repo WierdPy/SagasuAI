@@ -1,3 +1,9 @@
 yolov9-m.pt
 __pycache__
 yolov9-e.pt
+runs/detect/exp35/20241203_115003000_iOS.mp4
+runs/detect/exp36/20241203_115003000_iOS.mp4
+runs/detect/exp37/20241203_115302000_iOS.mp4
+runs/detect/exp38/20241203_115302000_iOS.mp4
+Videos/20241203_115003000_iOS.MOV
+Videos/20241203_115302000_iOS.MOV

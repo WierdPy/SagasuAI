@@ -39,7 +39,7 @@ def save_event(new_count):
     :param new_count: The new count of people after the event.
     """
     # Verbindung zur MongoDB herstellen
-    uri = "mongodb+srv://htl3r:ILoveZAI123@statisticdata.i2ntz.mongodb.net/?retryWrites=true&w=majority&appName=StatisticData"
+    uri = ""
     client = MongoClient(uri)
     db = client['Data']
     collection = db['PeopleCount']
