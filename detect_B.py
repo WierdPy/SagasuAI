@@ -6,6 +6,13 @@ from pathlib import Path
 from api import notify_person_event
 import torch
 from datetime import datetime
+import pymysql
+from datetime import datetime
+
+#python detect.py --weights yolov9-e.pt --conf 0.5 --source 0 --device 0 --class 0 --nosave
+
+# Toft
+# python detect.py --weights yolov9-e.pt --conf 0.5 --source 1 --device 0 --nosave --ws 2 2 --vid-stride 6
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLO root directory
@@ -27,7 +34,7 @@ def run(
         weights=ROOT / 'yolo.pt',  # model path or triton URL
         source=ROOT / 'data/images',  # file/dir/URL/glob/screen/0(webcam)
         data=ROOT / 'data/coco.yaml',  # dataset.yaml path
-        imgsz=(640, 640),  # inference size (height, width)
+        imgsz=(1216, 1216),  # inference size (height, width)
         conf_thres=0.25,  # confidence threshold
         iou_thres=0.45,  # NMS IOU threshold
         max_det=1000,  # maximum detections per image
@@ -51,7 +58,9 @@ def run(
         half=False,  # use FP16 half-precision inference
         dnn=False,  # use OpenCV DNN for ONNX inference
         vid_stride=1,  # video frame-rate stride
+        window_size=None  # number of windows to keep open
 ):
+
     source = str(source)
     save_img = not nosave and not source.endswith('.txt')  # save inference images
     is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
@@ -124,6 +133,33 @@ def run(
             gn = torch.tensor(im0.shape)[[1, 0, 1, 0]]  # normalization gain whwh
             imc = im0.copy() if save_crop else im0  # for save_crop
             annotator = Annotator(im0, line_width=line_thickness, example=str(names))
+
+
+            #print(len(det))
+
+            current_time = datetime.now().time()
+            current_time_val = f"{current_time.hour:02}:{current_time.minute:02}:{current_time.second:02}"
+            new_person_count = len(det)  # Current detected person count
+            
+            if new_person_count != current_person_count:
+                if new_person_count > current_person_count:
+                    everybodyout = False
+                    #notify_person_event(f'{current_person_count} -> Enter -> {current_person_count + 1}: {current_time_val}')  # Notify that a person has entered
+                    print(f'{current_person_count} -> Enter -> {current_person_count + 1}: {current_time_val}')  # Notify that a person has entered
+
+                else:
+                    if current_person_count == 1:
+                        everybodyout = True
+                    #notify_person_event(f'{current_person_count} -> Exit -> {current_person_count - 1}: {current_time_val}')  # Notify that a person has exited
+                    print(f'{current_person_count} -> Exit -> {current_person_count - 1}: {current_time_val}')  # Notify that a person has exited
+
+            # Update the current person count
+            current_person_count = new_person_count 
+
+
+
+
+
             if len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
@@ -133,30 +169,35 @@ def run(
                     n = (det[:, 5] == c).sum()  # detections per class
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
 
-                # Write results
-                # Write results
-                for *xyxy, conf, cls in reversed(det):
-                    # Print the position (bounding box coordinates)
-                    seen += 1
-                    new_person_count = len(det)
-                    #def notify_person_event(event_type, timestamp, original_count, new_count):
-                    if new_person_count != current_person_count:
-                        
-                        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-                        if new_person_count > current_person_count:
-                            #notify_person_event('enter')  # Notify that a person has entered
-                            
-                            notify_person_event("Enter", timestamp, current_person_count, new_person_count)
-                        else:
-                            #notify_person_event('exit')  # Notify that a person has exited
-                            notify_person_event("Exit", timestamp, current_person_count, new_person_count)
-                    # Update the current person count
-                    current_person_count = new_person_count
-                    
-                    #print(f"Detected {names[int(cls)]} at position: {xyxy}")
+                #NOTIFY PERSON EVENT
+                    for *xyxy, conf, cls in reversed(det):
+                        new_person_count = len(det)  # Aktuell erkannte Personenzahl
 
-                    
+                        if new_person_count != current_person_count:
+                            # Aktuellen Zeitstempel abrufen
+                            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                            # Wenn die Anzahl der Personen gestiegen ist (Eintritt)
+                            if new_person_count > current_person_count:
+                                movement = 'Enter'
+                                #notify_person_event(movement, timestamp, current_person_count,
+                                #                    new_person_count)  # API-Benachrichtigung und DB-Eintrag
+                                print(f'{timestamp} - {current_person_count} -> Enter -> {new_person_count}')
+                                notify_person_event()
+
+                            # Wenn die Anzahl der Personen gesunken ist (Austritt)
+                            else:
+                                movement = 'Exit'
+                                #notify_person_event(movement, timestamp, current_person_count,
+                                #                    new_person_count)  # API-Benachrichtigung und DB-Eintrag
+                                print(f'{timestamp} - {current_person_count} -> Exit -> {new_person_count}')
+
+                        # Aktualisierung der aktuellen Personenzahl
+                        current_person_count = new_person_count
+
+
+                    #
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
                         line = (cls, *xywh, conf) if save_conf else (cls, *xywh)  # label format
@@ -173,12 +214,11 @@ def run(
             # Stream results
             im0 = annotator.result()
             if view_img:
-                if platform.system() == 'Linux' and p not in windows:
-                    windows.append(p)
-                    cv2.namedWindow(str(p), cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO)  # allow window resize (Linux)
-                    cv2.resizeWindow(str(p), im0.shape[1], im0.shape[0])
+                if window_size:  # Falls window_size gesetzt ist
+                    #im0 = cv2.resize(im0, (window_size[0], window_size[1]))  # Bildgröße ändern
+                    im0 = cv2.resize(im0, (window_size[0] * im0.shape[1], window_size[1] * im0.shape[0]))  # Bildgröße ändern
                 cv2.imshow(str(p), im0)
-                cv2.waitKey(1)  # 1 millisecond
+                cv2.waitKey(1)  # 1 Millisekunde
 
             # Save results (image with detections)
             if save_img:
@@ -241,6 +281,7 @@ def parse_opt():
     parser.add_argument('--half', action='store_true', help='use FP16 half-precision inference')
     parser.add_argument('--dnn', action='store_true', help='use OpenCV DNN for ONNX inference')
     parser.add_argument('--vid-stride', type=int, default=1, help='video frame-rate stride')
+    parser.add_argument('--window-size', '--ws', nargs=2, type=int, help='size of the display window, width height')
     opt = parser.parse_args()
     opt.imgsz *= 2 if len(opt.imgsz) == 1 else 1  # expand
     print_args(vars(opt))
