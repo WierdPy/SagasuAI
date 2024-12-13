@@ -1,4 +1,4 @@
-import pymysql
+
 import requests
 from pymongo import MongoClient
 from datetime import datetime
@@ -19,9 +19,10 @@ def notify_person_event(event_type, timestamp, original_count, new_count):
     url = "https://ntfy.sh/Sagasu"
     data = f"{event_type}: {original_count} -> {new_count} at {timestamp}"  # Klarere Datenstruktur
 
-    save_event(new_count)
+    
 
     if apisend:
+        save_event(new_count)
         try:
             response = requests.post(url, data=data)
             response.raise_for_status()
