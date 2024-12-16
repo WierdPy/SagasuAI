@@ -20,9 +20,9 @@ def notify_person_event(event_type, timestamp, original_count, new_count):
     data = f"{event_type}: {original_count} -> {new_count} at {timestamp}"  # Klarere Datenstruktur
 
     
-
+    save_event(new_count)
     if apisend:
-        save_event(new_count)
+        
         try:
             response = requests.post(url, data=data)
             response.raise_for_status()
