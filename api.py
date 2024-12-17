@@ -19,7 +19,7 @@ def notify_person_event(event_type, timestamp, original_count, new_count):
     url = "https://ntfy.sh/Sagasu"
     data = f"{event_type}: {original_count} -> {new_count} at {timestamp}"  # Klarere Datenstruktur
 
-    
+    #print("Notify_person")
     save_event(new_count)
     if apisend:
         
@@ -40,7 +40,7 @@ def save_event(new_count):
     :param new_count: The new count of people after the event.
     """
     # Verbindung zur MongoDB herstellen
-    uri = ""
+    uri = "mongodb+srv://htl3r:ILoveZAI123@statisticdata.i2ntz.mongodb.net/?retryWrites=true&w=majority&appName=StatisticData"
     client = MongoClient(uri)
     db = client['Data']
     collection = db['PeopleCount']

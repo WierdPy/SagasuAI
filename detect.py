@@ -6,6 +6,7 @@ from pathlib import Path
 from api import notify_person_event
 import torch
 from datetime import datetime
+import threading
 
 FILE = Path(__file__).resolve()
 ROOT = FILE.parents[0]  # YOLO root directory
@@ -20,6 +21,12 @@ from utils.general import (LOGGER, Profile, check_file, check_img_size, check_im
 from utils.plots import Annotator, colors, save_one_box
 from utils.torch_utils import select_device, smart_inference_mode
 
+def async_notify_person_event(event_type, timestamp, original_count, new_count):
+    threading.Thread(
+        target=notify_person_event,
+        args=(event_type, timestamp, original_count, new_count),
+        daemon=True  # Der Thread wird beendet, wenn das Hauptprogramm endet
+    ).start()
 
 
 @smart_inference_mode()
@@ -144,16 +151,13 @@ def run(
                         
                         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-                        if new_person_count > current_person_count:
-                            #notify_person_event('enter')  # Notify that a person has entered
-                            
-                            notify_person_event("Enter", timestamp, current_person_count, new_person_count)
-                        else:
-                            #notify_person_event('exit')  # Notify that a person has exited
-                            notify_person_event("Exit", timestamp, current_person_count, new_person_count)
+                        event_type = "Enter" if new_person_count > current_person_count else "Exit"
+                
+                        # Starte Benachrichtigung in eigenem Thread
+                        async_notify_person_event(event_type, timestamp, current_person_count, new_person_count)
+                        current_person_count = new_person_count
                     # Update the current person count
-                    current_person_count = new_person_count
-                    
+                            
                     #print(f"Detected {names[int(cls)]} at position: {xyxy}")
 
                     
