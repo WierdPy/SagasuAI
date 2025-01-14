@@ -4,3 +4,6 @@ yolov9-e.pt
 runs/
 Videos/
 yolomodels/
+*.mp4
+yolov9-c-converted.pt
+yolov9-e-converted.pt

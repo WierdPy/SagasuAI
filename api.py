@@ -4,7 +4,9 @@ from pymongo import MongoClient
 from datetime import datetime
 import pytz
 
-apisend = False
+apisend_notification = False
+
+apisend = True
 
 
 def notify_person_event(event_type, timestamp, original_count, new_count):
@@ -20,15 +22,16 @@ def notify_person_event(event_type, timestamp, original_count, new_count):
     data = f"{event_type}: {original_count} -> {new_count} at {timestamp}"  # Klarere Datenstruktur
 
     #print("Notify_person")
-    save_event(new_count)
     if apisend:
-        
-        try:
-            response = requests.post(url, data=data)
-            response.raise_for_status()
-            print(f"Notification sent: {data}")
-        except requests.exceptions.RequestException as e:
-            print(f"Failed to send notification: {e}")
+        save_event(new_count)
+        if apisend_notification:
+            
+            try:
+                response = requests.post(url, data=data)
+                response.raise_for_status()
+                print(f"Notification sent: {data}")
+            except requests.exceptions.RequestException as e:
+                print(f"Failed to send notification: {e}")
 
 # Save event in a MonogDb database
 
