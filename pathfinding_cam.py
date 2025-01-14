@@ -163,7 +163,7 @@ def process_webcam(model, config=dict(conf=0.2, iou=0.6, classes=0), show_labels
             out.write(annotated_frame)
 
         # Display the frame
-        cv2.imshow('YOLOv9 Live Detection', annotated_frame)
+        cv2.imshow('Sagasu', annotated_frame)
 
         # Exit on pressing 'q'
         if cv2.waitKey(1) & 0xFF == ord('q'):
