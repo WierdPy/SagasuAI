@@ -188,3 +188,4 @@ process_webcam(
     webcam_index=0,  # Default webcam index
     save_video=False  # Enable video saving
 )
+#
